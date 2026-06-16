@@ -8,7 +8,6 @@ TradingView Pine Script v6 戦略のバックテスト結果を、Strategy Teste
 |---|---|
 | `30min-session-strategy.pine` | 30分足切替前後戦略（S1〜S9セッション）。Pine Script v6。 |
 | `tv_backtest_scraper_30min.py` | 上記Pineのバックテスト結果（Strategy Tester + データウィンドウ）をPlaywrightでスクレイピングし、銘柄ごとにCSV出力。 |
-| `tv_backtest_scraper.py` | 別ストラテジー「ズレ手法」（contrarian-gap-strategy.pine）用のスクレイパー。GU/GD/Cont集計に対応。 |
 | `aggregate_csv.py` | 銘柄ごとに出力されたCSV群を1つの横持ちCSV（1行=1銘柄）に集約。 |
 | `urls.txt` | 対象銘柄コードのリスト（1行1銘柄）。 |
 
