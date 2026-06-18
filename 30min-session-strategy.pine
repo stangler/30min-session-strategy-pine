@@ -7,16 +7,72 @@ strategy("30分足切替前後戦略", overlay=true,
 showTable  = input.bool(true, "レポートテーブル表示", group="レポート設定")
 max_trades = input.int(30, "集計上限トレード数（各セッションごと）", minval=1, group="レポート設定")
 
+// === セッション時刻入力（各セッションごとに変更可能） ===
+s1_eh = input.int(9,  "S1 エントリー時", minval=0, maxval=23, group="S1", inline="s1e")
+s1_em = input.int(25, "分",             minval=0, maxval=59, group="S1", inline="s1e")
+s1_xh = input.int(9,  "S1 エグジット時", minval=0, maxval=23, group="S1", inline="s1x")
+s1_xm = input.int(31, "分",             minval=0, maxval=59, group="S1", inline="s1x")
+
+s2_eh = input.int(9,  "S2 エントリー時", minval=0, maxval=23, group="S2", inline="s2e")
+s2_em = input.int(55, "分",             minval=0, maxval=59, group="S2", inline="s2e")
+s2_xh = input.int(10, "S2 エグジット時", minval=0, maxval=23, group="S2", inline="s2x")
+s2_xm = input.int(1,  "分",             minval=0, maxval=59, group="S2", inline="s2x")
+
+s3_eh = input.int(10, "S3 エントリー時", minval=0, maxval=23, group="S3", inline="s3e")
+s3_em = input.int(25, "分",             minval=0, maxval=59, group="S3", inline="s3e")
+s3_xh = input.int(10, "S3 エグジット時", minval=0, maxval=23, group="S3", inline="s3x")
+s3_xm = input.int(31, "分",             minval=0, maxval=59, group="S3", inline="s3x")
+
+s4_eh = input.int(10, "S4 エントリー時", minval=0, maxval=23, group="S4", inline="s4e")
+s4_em = input.int(55, "分",             minval=0, maxval=59, group="S4", inline="s4e")
+s4_xh = input.int(11, "S4 エグジット時", minval=0, maxval=23, group="S4", inline="s4x")
+s4_xm = input.int(1,  "分",             minval=0, maxval=59, group="S4", inline="s4x")
+
+s5_eh = input.int(11, "S5 エントリー時", minval=0, maxval=23, group="S5", inline="s5e")
+s5_em = input.int(25, "分",             minval=0, maxval=59, group="S5", inline="s5e")
+s5_xh = input.int(12, "S5 エグジット時", minval=0, maxval=23, group="S5", inline="s5x")
+s5_xm = input.int(31, "分",             minval=0, maxval=59, group="S5", inline="s5x")
+
+s6_eh = input.int(12, "S6 エントリー時", minval=0, maxval=23, group="S6", inline="s6e")
+s6_em = input.int(55, "分",             minval=0, maxval=59, group="S6", inline="s6e")
+s6_xh = input.int(13, "S6 エグジット時", minval=0, maxval=23, group="S6", inline="s6x")
+s6_xm = input.int(1,  "分",             minval=0, maxval=59, group="S6", inline="s6x")
+
+s7_eh = input.int(13, "S7 エントリー時", minval=0, maxval=23, group="S7", inline="s7e")
+s7_em = input.int(25, "分",             minval=0, maxval=59, group="S7", inline="s7e")
+s7_xh = input.int(14, "S7 エグジット時", minval=0, maxval=23, group="S7", inline="s7x")
+s7_xm = input.int(1,  "分",             minval=0, maxval=59, group="S7", inline="s7x")
+
+s8_eh = input.int(14, "S8 エントリー時", minval=0, maxval=23, group="S8", inline="s8e")
+s8_em = input.int(25, "分",             minval=0, maxval=59, group="S8", inline="s8e")
+s8_xh = input.int(14, "S8 エグジット時", minval=0, maxval=23, group="S8", inline="s8x")
+s8_xm = input.int(31, "分",             minval=0, maxval=59, group="S8", inline="s8x")
+
+s9_eh = input.int(14, "S9 エントリー時", minval=0, maxval=23, group="S9", inline="s9e")
+s9_em = input.int(55, "分",             minval=0, maxval=59, group="S9", inline="s9e")
+s9_xh = input.int(15, "S9 エグジット時", minval=0, maxval=23, group="S9", inline="s9x")
+s9_xm = input.int(1,  "分",             minval=0, maxval=59, group="S9", inline="s9x")
+
 // === セッション定義 (entry_h, entry_m, exit_h, exit_m, label) ===
-var int N = 9
-var array<int>    s_eh  = array.from(9, 9, 10, 10, 11, 12, 13, 14, 14)
-var array<int>    s_em  = array.from(25, 55, 25, 55, 25, 55, 25, 25, 55)
-var array<int>    s_xh  = array.from(9, 10, 10, 11, 12, 13, 14, 14, 15)
-var array<int>    s_xm  = array.from(31, 1, 31, 1, 31, 1, 1, 31, 1)
-var array<string> s_lbl = array.from(
-     "S1(9:25-9:31)", "S2(9:55-10:01)", "S3(10:25-10:31)", "S4(10:55-11:01)",
-     "S5(11:25-12:31)", "S6(12:55-13:01)", "S7(13:25-14:01)", "S8(14:25-14:31)",
-     "S9(14:55-15:01)")
+// 注意: input値を反映する配列は毎バー再構築する必要があるため var を付けない
+//      （var を付けると最初のバーの値で固定され、input変更が反映されない）
+int N = 9
+array<int> s_eh = array.from(s1_eh, s2_eh, s3_eh, s4_eh, s5_eh, s6_eh, s7_eh, s8_eh, s9_eh)
+array<int> s_em = array.from(s1_em, s2_em, s3_em, s4_em, s5_em, s6_em, s7_em, s8_em, s9_em)
+array<int> s_xh = array.from(s1_xh, s2_xh, s3_xh, s4_xh, s5_xh, s6_xh, s7_xh, s8_xh, s9_xh)
+array<int> s_xm = array.from(s1_xm, s2_xm, s3_xm, s4_xm, s5_xm, s6_xm, s7_xm, s8_xm, s9_xm)
+
+f_t(h, m) => str.tostring(h) + ":" + (m < 10 ? "0" : "") + str.tostring(m)
+array<string> s_lbl = array.from(
+     "S1(" + f_t(s1_eh, s1_em) + "-" + f_t(s1_xh, s1_xm) + ")",
+     "S2(" + f_t(s2_eh, s2_em) + "-" + f_t(s2_xh, s2_xm) + ")",
+     "S3(" + f_t(s3_eh, s3_em) + "-" + f_t(s3_xh, s3_xm) + ")",
+     "S4(" + f_t(s4_eh, s4_em) + "-" + f_t(s4_xh, s4_xm) + ")",
+     "S5(" + f_t(s5_eh, s5_em) + "-" + f_t(s5_xh, s5_xm) + ")",
+     "S6(" + f_t(s6_eh, s6_em) + "-" + f_t(s6_xh, s6_xm) + ")",
+     "S7(" + f_t(s7_eh, s7_em) + "-" + f_t(s7_xh, s7_xm) + ")",
+     "S8(" + f_t(s8_eh, s8_em) + "-" + f_t(s8_xh, s8_xm) + ")",
+     "S9(" + f_t(s9_eh, s9_em) + "-" + f_t(s9_xh, s9_xm) + ")")
 
 hhmm = hour * 100 + minute
 
