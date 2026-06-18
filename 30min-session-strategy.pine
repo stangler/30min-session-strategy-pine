@@ -5,53 +5,53 @@ strategy("30分足切替前後戦略", overlay=true,
 
 // === 入力 ===
 showTable  = input.bool(true, "レポートテーブル表示", group="レポート設定")
-max_trades = input.int(30, "集計上限トレード数（各セッションごと）", minval=1, group="レポート設定")
+max_trades = input.int(300, "集計上限トレード数（各セッションごと）", minval=1, group="レポート設定")
 
 // === セッション時刻入力（各セッションごとに変更可能） ===
 s1_eh = input.int(9,  "S1 エントリー時", minval=0, maxval=23, group="S1", inline="s1e")
-s1_em = input.int(25, "分",             minval=0, maxval=59, group="S1", inline="s1e")
+s1_em = input.int(26, "分",             minval=0, maxval=59, group="S1", inline="s1e")
 s1_xh = input.int(9,  "S1 エグジット時", minval=0, maxval=23, group="S1", inline="s1x")
-s1_xm = input.int(31, "分",             minval=0, maxval=59, group="S1", inline="s1x")
+s1_xm = input.int(32, "分",             minval=0, maxval=59, group="S1", inline="s1x")
 
 s2_eh = input.int(9,  "S2 エントリー時", minval=0, maxval=23, group="S2", inline="s2e")
-s2_em = input.int(55, "分",             minval=0, maxval=59, group="S2", inline="s2e")
+s2_em = input.int(56, "分",             minval=0, maxval=59, group="S2", inline="s2e")
 s2_xh = input.int(10, "S2 エグジット時", minval=0, maxval=23, group="S2", inline="s2x")
-s2_xm = input.int(1,  "分",             minval=0, maxval=59, group="S2", inline="s2x")
+s2_xm = input.int(2,  "分",             minval=0, maxval=59, group="S2", inline="s2x")
 
 s3_eh = input.int(10, "S3 エントリー時", minval=0, maxval=23, group="S3", inline="s3e")
-s3_em = input.int(25, "分",             minval=0, maxval=59, group="S3", inline="s3e")
+s3_em = input.int(26, "分",             minval=0, maxval=59, group="S3", inline="s3e")
 s3_xh = input.int(10, "S3 エグジット時", minval=0, maxval=23, group="S3", inline="s3x")
-s3_xm = input.int(31, "分",             minval=0, maxval=59, group="S3", inline="s3x")
+s3_xm = input.int(32, "分",             minval=0, maxval=59, group="S3", inline="s3x")
 
 s4_eh = input.int(10, "S4 エントリー時", minval=0, maxval=23, group="S4", inline="s4e")
-s4_em = input.int(55, "分",             minval=0, maxval=59, group="S4", inline="s4e")
+s4_em = input.int(56, "分",             minval=0, maxval=59, group="S4", inline="s4e")
 s4_xh = input.int(11, "S4 エグジット時", minval=0, maxval=23, group="S4", inline="s4x")
-s4_xm = input.int(1,  "分",             minval=0, maxval=59, group="S4", inline="s4x")
+s4_xm = input.int(2,  "分",             minval=0, maxval=59, group="S4", inline="s4x")
 
 s5_eh = input.int(11, "S5 エントリー時", minval=0, maxval=23, group="S5", inline="s5e")
-s5_em = input.int(25, "分",             minval=0, maxval=59, group="S5", inline="s5e")
+s5_em = input.int(26, "分",             minval=0, maxval=59, group="S5", inline="s5e")
 s5_xh = input.int(12, "S5 エグジット時", minval=0, maxval=23, group="S5", inline="s5x")
-s5_xm = input.int(31, "分",             minval=0, maxval=59, group="S5", inline="s5x")
+s5_xm = input.int(32, "分",             minval=0, maxval=59, group="S5", inline="s5x")
 
 s6_eh = input.int(12, "S6 エントリー時", minval=0, maxval=23, group="S6", inline="s6e")
-s6_em = input.int(55, "分",             minval=0, maxval=59, group="S6", inline="s6e")
+s6_em = input.int(56, "分",             minval=0, maxval=59, group="S6", inline="s6e")
 s6_xh = input.int(13, "S6 エグジット時", minval=0, maxval=23, group="S6", inline="s6x")
-s6_xm = input.int(1,  "分",             minval=0, maxval=59, group="S6", inline="s6x")
+s6_xm = input.int(2,  "分",             minval=0, maxval=59, group="S6", inline="s6x")
 
 s7_eh = input.int(13, "S7 エントリー時", minval=0, maxval=23, group="S7", inline="s7e")
-s7_em = input.int(25, "分",             minval=0, maxval=59, group="S7", inline="s7e")
+s7_em = input.int(26, "分",             minval=0, maxval=59, group="S7", inline="s7e")
 s7_xh = input.int(14, "S7 エグジット時", minval=0, maxval=23, group="S7", inline="s7x")
-s7_xm = input.int(1,  "分",             minval=0, maxval=59, group="S7", inline="s7x")
+s7_xm = input.int(2,  "分",             minval=0, maxval=59, group="S7", inline="s7x")
 
 s8_eh = input.int(14, "S8 エントリー時", minval=0, maxval=23, group="S8", inline="s8e")
-s8_em = input.int(25, "分",             minval=0, maxval=59, group="S8", inline="s8e")
+s8_em = input.int(26, "分",             minval=0, maxval=59, group="S8", inline="s8e")
 s8_xh = input.int(14, "S8 エグジット時", minval=0, maxval=23, group="S8", inline="s8x")
-s8_xm = input.int(31, "分",             minval=0, maxval=59, group="S8", inline="s8x")
+s8_xm = input.int(32, "分",             minval=0, maxval=59, group="S8", inline="s8x")
 
 s9_eh = input.int(14, "S9 エントリー時", minval=0, maxval=23, group="S9", inline="s9e")
-s9_em = input.int(55, "分",             minval=0, maxval=59, group="S9", inline="s9e")
+s9_em = input.int(56, "分",             minval=0, maxval=59, group="S9", inline="s9e")
 s9_xh = input.int(15, "S9 エグジット時", minval=0, maxval=23, group="S9", inline="s9x")
-s9_xm = input.int(1,  "分",             minval=0, maxval=59, group="S9", inline="s9x")
+s9_xm = input.int(2,  "分",             minval=0, maxval=59, group="S9", inline="s9x")
 
 // === セッション定義 (entry_h, entry_m, exit_h, exit_m, label) ===
 // 注意: input値を反映する配列は毎バー再構築する必要があるため var を付けない
