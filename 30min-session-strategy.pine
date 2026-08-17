@@ -40,27 +40,32 @@ s6_xm = input.int(2,  "分",             minval=0, maxval=59, group="S6", inline
 
 s7_eh = input.int(13, "S7 エントリー時", minval=0, maxval=23, group="S7", inline="s7e")
 s7_em = input.int(26, "分",             minval=0, maxval=59, group="S7", inline="s7e")
-s7_xh = input.int(14, "S7 エグジット時", minval=0, maxval=23, group="S7", inline="s7x")
-s7_xm = input.int(2,  "分",             minval=0, maxval=59, group="S7", inline="s7x")
+s7_xh = input.int(13, "S7 エグジット時", minval=0, maxval=23, group="S7", inline="s7x")
+s7_xm = input.int(32, "分",             minval=0, maxval=59, group="S7", inline="s7x")
 
-s8_eh = input.int(14, "S8 エントリー時", minval=0, maxval=23, group="S8", inline="s8e")
-s8_em = input.int(26, "分",             minval=0, maxval=59, group="S8", inline="s8e")
+s8_eh = input.int(13, "S8 エントリー時", minval=0, maxval=23, group="S8", inline="s8e")
+s8_em = input.int(56, "分",             minval=0, maxval=59, group="S8", inline="s8e")
 s8_xh = input.int(14, "S8 エグジット時", minval=0, maxval=23, group="S8", inline="s8x")
-s8_xm = input.int(32, "分",             minval=0, maxval=59, group="S8", inline="s8x")
+s8_xm = input.int(2,  "分",             minval=0, maxval=59, group="S8", inline="s8x")
 
 s9_eh = input.int(14, "S9 エントリー時", minval=0, maxval=23, group="S9", inline="s9e")
-s9_em = input.int(56, "分",             minval=0, maxval=59, group="S9", inline="s9e")
-s9_xh = input.int(15, "S9 エグジット時", minval=0, maxval=23, group="S9", inline="s9x")
-s9_xm = input.int(2,  "分",             minval=0, maxval=59, group="S9", inline="s9x")
+s9_em = input.int(26, "分",             minval=0, maxval=59, group="S9", inline="s9e")
+s9_xh = input.int(14, "S9 エグジット時", minval=0, maxval=23, group="S9", inline="s9x")
+s9_xm = input.int(32, "分",             minval=0, maxval=59, group="S9", inline="s9x")
+
+s10_eh = input.int(14, "S10 エントリー時", minval=0, maxval=23, group="S10", inline="s10e")
+s10_em = input.int(56, "分",              minval=0, maxval=59, group="S10", inline="s10e")
+s10_xh = input.int(15, "S10 エグジット時", minval=0, maxval=23, group="S10", inline="s10x")
+s10_xm = input.int(2,  "分",              minval=0, maxval=59, group="S10", inline="s10x")
 
 // === セッション定義 (entry_h, entry_m, exit_h, exit_m, label) ===
 // 注意: input値を反映する配列は毎バー再構築する必要があるため var を付けない
 //      （var を付けると最初のバーの値で固定され、input変更が反映されない）
-int N = 9
-array<int> s_eh = array.from(s1_eh, s2_eh, s3_eh, s4_eh, s5_eh, s6_eh, s7_eh, s8_eh, s9_eh)
-array<int> s_em = array.from(s1_em, s2_em, s3_em, s4_em, s5_em, s6_em, s7_em, s8_em, s9_em)
-array<int> s_xh = array.from(s1_xh, s2_xh, s3_xh, s4_xh, s5_xh, s6_xh, s7_xh, s8_xh, s9_xh)
-array<int> s_xm = array.from(s1_xm, s2_xm, s3_xm, s4_xm, s5_xm, s6_xm, s7_xm, s8_xm, s9_xm)
+int N = 10
+array<int> s_eh = array.from(s1_eh, s2_eh, s3_eh, s4_eh, s5_eh, s6_eh, s7_eh, s8_eh, s9_eh, s10_eh)
+array<int> s_em = array.from(s1_em, s2_em, s3_em, s4_em, s5_em, s6_em, s7_em, s8_em, s9_em, s10_em)
+array<int> s_xh = array.from(s1_xh, s2_xh, s3_xh, s4_xh, s5_xh, s6_xh, s7_xh, s8_xh, s9_xh, s10_xh)
+array<int> s_xm = array.from(s1_xm, s2_xm, s3_xm, s4_xm, s5_xm, s6_xm, s7_xm, s8_xm, s9_xm, s10_xm)
 
 f_t(h, m) => str.tostring(h) + ":" + (m < 10 ? "0" : "") + str.tostring(m)
 array<string> s_lbl = array.from(
@@ -72,7 +77,8 @@ array<string> s_lbl = array.from(
      "S6(" + f_t(s6_eh, s6_em) + "-" + f_t(s6_xh, s6_xm) + ")",
      "S7(" + f_t(s7_eh, s7_em) + "-" + f_t(s7_xh, s7_xm) + ")",
      "S8(" + f_t(s8_eh, s8_em) + "-" + f_t(s8_xh, s8_xm) + ")",
-     "S9(" + f_t(s9_eh, s9_em) + "-" + f_t(s9_xh, s9_xm) + ")")
+     "S9(" + f_t(s9_eh, s9_em) + "-" + f_t(s9_xh, s9_xm) + ")",
+     "S10(" + f_t(s10_eh, s10_em) + "-" + f_t(s10_xh, s10_xm) + ")")
 
 hhmm = hour * 100 + minute
 
@@ -93,6 +99,7 @@ var array<float> pnl5 = array.new<float>()
 var array<float> pnl6 = array.new<float>()
 var array<float> pnl7 = array.new<float>()
 var array<float> pnl8 = array.new<float>()
+var array<float> pnl9 = array.new<float>()
 
 f_getArr(i) =>
     array<float> a = switch i
@@ -104,7 +111,8 @@ f_getArr(i) =>
         5 => pnl5
         6 => pnl6
         7 => pnl7
-        => pnl8
+        8 => pnl8
+        => pnl9
     a
 
 var float entryPrice = na
@@ -255,6 +263,7 @@ t5 = array.get(dw_total, 5), b5 = array.get(dw_bull, 5), r5 = array.get(dw_bear,
 t6 = array.get(dw_total, 6), b6 = array.get(dw_bull, 6), r6 = array.get(dw_bear, 6), p6 = array.get(dw_pnl, 6)
 t7 = array.get(dw_total, 7), b7 = array.get(dw_bull, 7), r7 = array.get(dw_bear, 7), p7 = array.get(dw_pnl, 7)
 t8 = array.get(dw_total, 8), b8 = array.get(dw_bull, 8), r8 = array.get(dw_bear, 8), p8 = array.get(dw_pnl, 8)
+t9 = array.get(dw_total, 9), b9 = array.get(dw_bull, 9), r9 = array.get(dw_bear, 9), p9 = array.get(dw_pnl, 9)
 
 plot(t0, title="S1 総数", display=display.data_window)
 plot(b0, title="S1 勝",   display=display.data_window)
@@ -310,10 +319,16 @@ plot(r8, title="S9 負",   display=display.data_window)
 plot(f_dw_wr(b8, r8), title="S9 勝率%", display=display.data_window)
 plot(p8, title="S9 PnL", display=display.data_window)
 
-sum_total_dw = t0+t1+t2+t3+t4+t5+t6+t7+t8
-sum_bull_dw  = b0+b1+b2+b3+b4+b5+b6+b7+b8
-sum_bear_dw  = r0+r1+r2+r3+r4+r5+r6+r7+r8
-sum_pnl_dw   = p0+p1+p2+p3+p4+p5+p6+p7+p8
+plot(t9, title="S10 総数", display=display.data_window)
+plot(b9, title="S10 勝",   display=display.data_window)
+plot(r9, title="S10 負",   display=display.data_window)
+plot(f_dw_wr(b9, r9), title="S10 勝率%", display=display.data_window)
+plot(p9, title="S10 PnL", display=display.data_window)
+
+sum_total_dw = t0+t1+t2+t3+t4+t5+t6+t7+t8+t9
+sum_bull_dw  = b0+b1+b2+b3+b4+b5+b6+b7+b8+b9
+sum_bear_dw  = r0+r1+r2+r3+r4+r5+r6+r7+r8+r9
+sum_pnl_dw   = p0+p1+p2+p3+p4+p5+p6+p7+p8+p9
 
 plot(sum_total_dw, title="Sum 総数", display=display.data_window)
 plot(sum_bull_dw,  title="Sum 勝",   display=display.data_window)

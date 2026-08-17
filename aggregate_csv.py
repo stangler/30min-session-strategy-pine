@@ -8,12 +8,12 @@ from datetime import datetime
 from pathlib import Path
 
 # ========== 設定 ==========
-INPUT_DIR   = Path(".")          # 個別CSVが置かれているフォルダ
-URLS_FILE   = Path("urls.txt")   # 銘柄リスト（順序維持に使用）
-OUTPUT_FILE = Path(f"summary_{datetime.now():%Y%m%d}.csv")
+INPUT_DIR   = Path("csv")        # 個別CSVが置かれているフォルダ
+URLS_FILE   = Path("urls.csv")   # 銘柄リスト（順序維持に使用）
+OUTPUT_FILE = INPUT_DIR / f"summary_{datetime.now():%Y%m%d}.csv"
 
 # 出力列の順序（個別CSVの「指標」名と一致させる）
-_SESSIONS = ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "Sum"]
+_SESSIONS = ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S10", "Sum"]
 COLUMNS = []
 for _s in _SESSIONS:
     COLUMNS += [f"{_s}_総数", f"{_s}_勝", f"{_s}_負", f"{_s}_勝率", f"{_s}_PnL"]
@@ -24,9 +24,20 @@ COLUMNS += [
 # ==========================
 
 
-def load_symbols() -> list[str]:
+def load_symbols() -> list[tuple[str, str]]:
+    """urls.csv から (銘柄コード, 銘柄名) のリストを返す"""
     lines = URLS_FILE.read_text(encoding="utf-8").splitlines()
-    return [l.strip() for l in lines if l.strip() and not l.startswith("#")]
+    symbols = []
+    for l in lines:
+        l = l.strip()
+        if not l or l.startswith("#"):
+            continue
+        cols = l.split("\t")
+        code = cols[1].strip() if len(cols) >= 2 else cols[0].strip()
+        name = cols[2].strip() if len(cols) >= 3 else ""
+        if code:
+            symbols.append((code, name))
+    return symbols
 
 
 def find_csv_for_symbol(symbol: str) -> Path | None:
@@ -54,7 +65,7 @@ def main():
     rows = []
     missing = []
 
-    for symbol in symbols:
+    for symbol, name in symbols:
         csv_path = find_csv_for_symbol(symbol)
         if csv_path is None:
             print(f"  ✗ {symbol}: CSVが見つかりません")
@@ -62,7 +73,7 @@ def main():
             continue
 
         data = read_indicator_csv(csv_path)
-        row = {"銘柄": symbol}
+        row = {"銘柄": symbol, "銘柄名": name}
         for col in COLUMNS:
             row[col] = data.get(col, "")
         rows.append(row)
@@ -72,7 +83,8 @@ def main():
         print("集約対象のデータがありません。")
         return
 
-    fieldnames = ["銘柄"] + COLUMNS
+    fieldnames = ["銘柄", "銘柄名"] + COLUMNS
+    INPUT_DIR.mkdir(parents=True, exist_ok=True)
     with open(OUTPUT_FILE, "w", newline="", encoding="utf-8-sig") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()

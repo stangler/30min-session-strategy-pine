@@ -1,5 +1,5 @@
 # tv_backtest_scraper_30min.py
-# 「30分足切替前後戦略」(S1〜S9セッション) のStrategy Tester結果をスクレイピングする版
+# 「30分足切替前後戦略」(S1〜S10セッション) のStrategy Tester結果をスクレイピングする版
 
 import asyncio
 import csv
@@ -9,14 +9,14 @@ from pathlib import Path
 from playwright.async_api import async_playwright
 
 # ========== 設定 ==========
-URLS_FILE    = Path("urls.txt")
-OUTPUT_DIR   = Path(".")
+URLS_FILE    = Path("urls.csv")
+OUTPUT_DIR   = Path("csv")
 CHART_URL    = "https://jp.tradingview.com/chart/"
 USER_DATA    = r"C:\Temp\tv-profile-pw"   # セッション保存先
 WAIT_RECALC  = 10      # バックテスト再計算待機（秒）
 WAIT_SEARCH  = 1.5    # 検索ダイアログ安定待機（秒）
 EXCHANGE     = "TSE"
-SESSIONS     = ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "Sum"]
+SESSIONS     = ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S10", "Sum"]
 # ==========================
 
 DEBUG_SCRAPE = False  # Trueにすると全テキストノードをdebug_texts.txtに出力
@@ -24,10 +24,20 @@ DEBUG_SCRAPE = False  # Trueにすると全テキストノードをdebug_texts.t
 
 def load_symbols() -> list[str]:
     lines = URLS_FILE.read_text(encoding="utf-8").splitlines()
-    return [l.strip() for l in lines if l.strip() and not l.startswith("#")]
+    symbols = []
+    for l in lines:
+        l = l.strip()
+        if not l or l.startswith("#"):
+            continue
+        cols = l.split("\t")
+        code = cols[1].strip() if len(cols) >= 2 else cols[0].strip()
+        if code:
+            symbols.append(code)
+    return symbols
 
 
 def save_csv(data: list, symbol: str):
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     safe = re.sub(r'[\\/:*?"<>|]', "_", symbol)
     fn = OUTPUT_DIR / f"{safe}_{datetime.now():%Y%m%d}.csv"
     with open(fn, "w", newline="", encoding="utf-8-sig") as f:
@@ -135,7 +145,7 @@ async def scrape_backtest(page) -> list:
                 m = re.match(r'^(\d+)トレード', texts[i + 1])
                 if m: result["負けトレード"] = m.group(1)
 
-        # --- データウィンドウ: セッション別（S1〜S9, Sum） ---
+        # --- データウィンドウ: セッション別（S1〜S10, Sum） ---
         else:
             for sess in SESSIONS:
                 key_total = f"{sess} 総数"
@@ -182,7 +192,7 @@ async def main():
         print("  1. TradingViewにログイン")
         print("  2. 「30分足切替前後戦略」適用済みチャートを開く")
         print("  3. Strategy Testerパネルを表示")
-        print("  4. データウィンドウでS1〜S9, Sumのplotが見える状態にする")
+        print("  4. データウィンドウでS1〜S10, Sumのplotが見える状態にする")
         print("=" * 50)
         input("準備完了 → Enter: ")
 
