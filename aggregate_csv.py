@@ -16,7 +16,7 @@ OUTPUT_FILE = INPUT_DIR / f"summary_{datetime.now():%Y%m%d}.csv"
 _SESSIONS = ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S10", "Sum"]
 COLUMNS = []
 for _s in _SESSIONS:
-    COLUMNS += [f"{_s}_総数", f"{_s}_勝", f"{_s}_負", f"{_s}_勝率", f"{_s}_PnL"]
+    COLUMNS += [f"{_s}_総数", f"{_s}_勝", f"{_s}_負", f"{_s}_勝率", f"{_s}_PnL", f"{_s}_PF"]
 COLUMNS += [
     "総損益", "最大ドローダウン", "勝率", "プロフィットファクター",
     "トレード総数", "勝ちトレード", "負けトレード",

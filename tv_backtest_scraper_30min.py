@@ -75,8 +75,8 @@ async def scrape_backtest(page) -> list:
     DOMテキスト構造:
       主要統計: 総損益→+NNN, 最大ドローダウン→NNN, 勝ちトレード→NN.NN%(勝率), プロフィットファクター→N.NNN
       トレード分布: "NN" → "トレード総数" → "勝ち" → "NNトレード" → "負け" → "NNトレード"
-      データウィンドウ: "S1 総数"→値, "S1 勝"→値, "S1 負"→値, "S1 勝率%"→値, "S1 PnL"→値 ...
-                       "Sum 総数"〜"Sum PnL" も同様
+      データウィンドウ: "S1 勝"→値, "S1 負"→値, "S1 勝率%"→値, "S1 PnL"→値, "S1 PF"→値 ...
+                       "Sum 総数"〜"Sum PF" も同様
     """
     texts = await page.evaluate("""
     () => {
@@ -153,6 +153,7 @@ async def scrape_backtest(page) -> list:
                 key_lose  = f"{sess} 負"
                 key_wr    = f"{sess} 勝率%"
                 key_pnl   = f"{sess} PnL"
+                key_pf    = f"{sess} PF"
 
                 if t == key_total and f"{sess}_総数" not in result:
                     if i + 1 < len(texts): result[f"{sess}_総数"] = texts[i + 1].replace(".0", "")
@@ -164,6 +165,18 @@ async def scrape_backtest(page) -> list:
                     if i + 1 < len(texts): result[f"{sess}_勝率"] = texts[i + 1].replace(".0", "") + "%"
                 elif t == key_pnl and f"{sess}_PnL" not in result:
                     if i + 1 < len(texts): result[f"{sess}_PnL"] = texts[i + 1]
+                elif t == key_pf and f"{sess}_PF" not in result:
+                    if i + 1 < len(texts):
+                        result[f"{sess}_PF"] = texts[i + 1] if is_num(texts[i + 1]) else ""
+
+    # S1〜S10 の総数はData Windowに出していないため 勝+負 から算出
+    for sess in SESSIONS[:-1]:
+        w, l = result.get(f"{sess}_勝"), result.get(f"{sess}_負")
+        if w is not None and l is not None and f"{sess}_総数" not in result:
+            try:
+                result[f"{sess}_総数"] = str(int(w) + int(l))
+            except ValueError:
+                pass
 
     if DEBUG_SCRAPE:
         print(f"  [DEBUG] 抽出結果: {result}")

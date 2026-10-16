@@ -137,44 +137,56 @@ f_calc(pnl_arr, n) =>
     int   bull = 0
     int   bear = 0
     float pnl  = 0.0
+    float gp   = 0.0
+    float gl   = 0.0
     if sz > 0
         int start_i = math.max(0, sz - n)
         for i = start_i to sz - 1
             float v = array.get(pnl_arr, i)
             pnl += v
+            gp  += v > 0 ? v : 0.0
+            gl  += v < 0 ? -v : 0.0
             bull += v > 0 ? 1 : 0
             bear += v <= 0 ? 1 : 0
-    [sz, bull, bear, pnl]
+    [sz, bull, bear, pnl, gp, gl]
 
 // === 集計結果保存 ===
 var array<int>   dw_total = array.new<int>(N, 0)
 var array<int>   dw_bull  = array.new<int>(N, 0)
 var array<int>   dw_bear  = array.new<int>(N, 0)
 var array<float> dw_pnl   = array.new<float>(N, 0.0)
+var array<float> dw_gp    = array.new<float>(N, 0.0)
+var array<float> dw_gl    = array.new<float>(N, 0.0)
 
 if barstate.islastconfirmedhistory or barstate.islast
     for i = 0 to N - 1
-        [sz, b, r, p] = f_calc(f_getArr(i), max_trades)
+        [sz, b, r, p, g, l] = f_calc(f_getArr(i), max_trades)
         array.set(dw_total, i, sz)
         array.set(dw_bull,  i, b)
         array.set(dw_bear,  i, r)
         array.set(dw_pnl,   i, p)
+        array.set(dw_gp,    i, g)
+        array.set(dw_gl,    i, l)
 
 // === テーブル描画関数 ===
 f_wr(bull, bear) =>
     total = bull + bear
     total > 0 ? str.tostring(float(bull) / float(total) * 100, "#.#") + "%" : "—"
 
-f_row(tbl, row, lbl, raw_total, bull, bear, pnl, bg) =>
+f_pf(gp, gl) => gl > 0 ? gp / gl : na
+
+f_row(tbl, row, lbl, raw_total, bull, bear, pnl, gp, gl, bg) =>
     table.cell(tbl, 0, row, lbl, bgcolor=bg, text_color=color.white, text_size=size.normal)
     table.cell(tbl, 1, row, str.tostring(raw_total), bgcolor=bg, text_color=color.white, text_size=size.normal)
     table.cell(tbl, 2, row, str.tostring(bull), bgcolor=bg, text_color=color.green, text_size=size.normal)
     table.cell(tbl, 3, row, str.tostring(bear), bgcolor=bg, text_color=color.red, text_size=size.normal)
     table.cell(tbl, 4, row, f_wr(bull, bear), bgcolor=bg, text_color=color.white, text_size=size.normal)
     table.cell(tbl, 5, row, str.tostring(pnl, "#,###.##"), bgcolor=bg, text_color = pnl >= 0 ? color.green : color.red, text_size=size.normal)
+    float pfv = f_pf(gp, gl)
+    table.cell(tbl, 6, row, na(pfv) ? "—" : str.tostring(pfv, "#.##"), bgcolor=bg, text_color = na(pfv) ? color.white : (pfv >= 1.5 ? color.green : (pfv >= 1.0 ? color.orange : color.red)), text_size=size.normal)
 
 // === メイン表（列数6） ===
-var table mainTable = table.new(position.top_right, 6, N + 12,
+var table mainTable = table.new(position.top_right, 7, N + 12,
      bgcolor=color.new(color.gray, 90), border_width=1,
      frame_color=color.gray, border_color=color.new(color.gray, 60))
 
@@ -186,6 +198,7 @@ if showTable and (barstate.islastconfirmedhistory or barstate.islast)
     table.cell(mainTable, 3, 0, "負",           bgcolor=C_HDR, text_color=color.white, text_size=size.normal)
     table.cell(mainTable, 4, 0, "勝率",         bgcolor=C_HDR, text_color=color.white, text_size=size.normal)
     table.cell(mainTable, 5, 0, "PnL合計",      bgcolor=C_HDR, text_color=color.white, text_size=size.normal)
+    table.cell(mainTable, 6, 0, "PF",           bgcolor=C_HDR, text_color=color.white, text_size=size.normal)
 
     int row = 1
     color C_AM = color.new(#1b5e20, 30)
@@ -193,24 +206,30 @@ if showTable and (barstate.islastconfirmedhistory or barstate.islast)
     int   sum_bull  = 0
     int   sum_bear  = 0
     float sum_pnl   = 0.0
+    float sum_gp    = 0.0
+    float sum_gl    = 0.0
 
     for i = 0 to N - 1
         t = array.get(dw_total, i)
         b = array.get(dw_bull,  i)
         r = array.get(dw_bear,  i)
         p = array.get(dw_pnl,   i)
-        f_row(mainTable, row, array.get(s_lbl, i), t, b, r, p, C_AM)
+        g = array.get(dw_gp,    i)
+        l = array.get(dw_gl,    i)
+        f_row(mainTable, row, array.get(s_lbl, i), t, b, r, p, g, l, C_AM)
         sum_total += t
         sum_bull  += b
         sum_bear  += r
         sum_pnl   += p
+        sum_gp    += g
+        sum_gl    += l
         row += 1
 
-    f_row(mainTable, row, "Sum", sum_total, sum_bull, sum_bear, sum_pnl, C_AM)
+    f_row(mainTable, row, "Sum", sum_total, sum_bull, sum_bear, sum_pnl, sum_gp, sum_gl, C_AM)
     row += 1
 
     color C_STATS = color.new(#4a148c, 30)
-    for c = 0 to 5
+    for c = 0 to 6
         table.cell(mainTable, c, row, c == 0 ? "Strategy Stats" : "", bgcolor=color.new(#455a64, 0), text_color=color.white, text_size=size.normal)
     row += 1
 
@@ -252,6 +271,7 @@ if showTable and (barstate.islastconfirmedhistory or barstate.islast)
                text_size=size.normal)
 
 // === データウィンドウ出力（スクレイピング用） ===
+// plot上限64本のため S1〜S10 の「総数」は出力しない（スクレイパー側で 勝+負 から算出）。
 f_dw_wr(bull, bear) => bull + bear > 0 ? float(bull) / float(bull + bear) * 100 : na
 
 t0 = array.get(dw_total, 0), b0 = array.get(dw_bull, 0), r0 = array.get(dw_bear, 0), p0 = array.get(dw_pnl, 0)
@@ -265,73 +285,76 @@ t7 = array.get(dw_total, 7), b7 = array.get(dw_bull, 7), r7 = array.get(dw_bear,
 t8 = array.get(dw_total, 8), b8 = array.get(dw_bull, 8), r8 = array.get(dw_bear, 8), p8 = array.get(dw_pnl, 8)
 t9 = array.get(dw_total, 9), b9 = array.get(dw_bull, 9), r9 = array.get(dw_bear, 9), p9 = array.get(dw_pnl, 9)
 
-plot(t0, title="S1 総数", display=display.data_window)
 plot(b0, title="S1 勝",   display=display.data_window)
 plot(r0, title="S1 負",   display=display.data_window)
 plot(f_dw_wr(b0, r0), title="S1 勝率%", display=display.data_window)
 plot(p0, title="S1 PnL", display=display.data_window)
+plot(f_pf(array.get(dw_gp, 0), array.get(dw_gl, 0)), title="S1 PF", display=display.data_window)
 
-plot(t1, title="S2 総数", display=display.data_window)
 plot(b1, title="S2 勝",   display=display.data_window)
 plot(r1, title="S2 負",   display=display.data_window)
 plot(f_dw_wr(b1, r1), title="S2 勝率%", display=display.data_window)
 plot(p1, title="S2 PnL", display=display.data_window)
+plot(f_pf(array.get(dw_gp, 1), array.get(dw_gl, 1)), title="S2 PF", display=display.data_window)
 
-plot(t2, title="S3 総数", display=display.data_window)
 plot(b2, title="S3 勝",   display=display.data_window)
 plot(r2, title="S3 負",   display=display.data_window)
 plot(f_dw_wr(b2, r2), title="S3 勝率%", display=display.data_window)
 plot(p2, title="S3 PnL", display=display.data_window)
+plot(f_pf(array.get(dw_gp, 2), array.get(dw_gl, 2)), title="S3 PF", display=display.data_window)
 
-plot(t3, title="S4 総数", display=display.data_window)
 plot(b3, title="S4 勝",   display=display.data_window)
 plot(r3, title="S4 負",   display=display.data_window)
 plot(f_dw_wr(b3, r3), title="S4 勝率%", display=display.data_window)
 plot(p3, title="S4 PnL", display=display.data_window)
+plot(f_pf(array.get(dw_gp, 3), array.get(dw_gl, 3)), title="S4 PF", display=display.data_window)
 
-plot(t4, title="S5 総数", display=display.data_window)
 plot(b4, title="S5 勝",   display=display.data_window)
 plot(r4, title="S5 負",   display=display.data_window)
 plot(f_dw_wr(b4, r4), title="S5 勝率%", display=display.data_window)
 plot(p4, title="S5 PnL", display=display.data_window)
+plot(f_pf(array.get(dw_gp, 4), array.get(dw_gl, 4)), title="S5 PF", display=display.data_window)
 
-plot(t5, title="S6 総数", display=display.data_window)
 plot(b5, title="S6 勝",   display=display.data_window)
 plot(r5, title="S6 負",   display=display.data_window)
 plot(f_dw_wr(b5, r5), title="S6 勝率%", display=display.data_window)
 plot(p5, title="S6 PnL", display=display.data_window)
+plot(f_pf(array.get(dw_gp, 5), array.get(dw_gl, 5)), title="S6 PF", display=display.data_window)
 
-plot(t6, title="S7 総数", display=display.data_window)
 plot(b6, title="S7 勝",   display=display.data_window)
 plot(r6, title="S7 負",   display=display.data_window)
 plot(f_dw_wr(b6, r6), title="S7 勝率%", display=display.data_window)
 plot(p6, title="S7 PnL", display=display.data_window)
+plot(f_pf(array.get(dw_gp, 6), array.get(dw_gl, 6)), title="S7 PF", display=display.data_window)
 
-plot(t7, title="S8 総数", display=display.data_window)
 plot(b7, title="S8 勝",   display=display.data_window)
 plot(r7, title="S8 負",   display=display.data_window)
 plot(f_dw_wr(b7, r7), title="S8 勝率%", display=display.data_window)
 plot(p7, title="S8 PnL", display=display.data_window)
+plot(f_pf(array.get(dw_gp, 7), array.get(dw_gl, 7)), title="S8 PF", display=display.data_window)
 
-plot(t8, title="S9 総数", display=display.data_window)
 plot(b8, title="S9 勝",   display=display.data_window)
 plot(r8, title="S9 負",   display=display.data_window)
 plot(f_dw_wr(b8, r8), title="S9 勝率%", display=display.data_window)
 plot(p8, title="S9 PnL", display=display.data_window)
+plot(f_pf(array.get(dw_gp, 8), array.get(dw_gl, 8)), title="S9 PF", display=display.data_window)
 
-plot(t9, title="S10 総数", display=display.data_window)
 plot(b9, title="S10 勝",   display=display.data_window)
 plot(r9, title="S10 負",   display=display.data_window)
 plot(f_dw_wr(b9, r9), title="S10 勝率%", display=display.data_window)
 plot(p9, title="S10 PnL", display=display.data_window)
+plot(f_pf(array.get(dw_gp, 9), array.get(dw_gl, 9)), title="S10 PF", display=display.data_window)
 
 sum_total_dw = t0+t1+t2+t3+t4+t5+t6+t7+t8+t9
 sum_bull_dw  = b0+b1+b2+b3+b4+b5+b6+b7+b8+b9
 sum_bear_dw  = r0+r1+r2+r3+r4+r5+r6+r7+r8+r9
 sum_pnl_dw   = p0+p1+p2+p3+p4+p5+p6+p7+p8+p9
+sum_gp_dw    = array.sum(dw_gp)
+sum_gl_dw    = array.sum(dw_gl)
 
 plot(sum_total_dw, title="Sum 総数", display=display.data_window)
 plot(sum_bull_dw,  title="Sum 勝",   display=display.data_window)
 plot(sum_bear_dw,  title="Sum 負",   display=display.data_window)
 plot(f_dw_wr(sum_bull_dw, sum_bear_dw), title="Sum 勝率%", display=display.data_window)
 plot(sum_pnl_dw,   title="Sum PnL",  display=display.data_window)
+plot(f_pf(sum_gp_dw, sum_gl_dw), title="Sum PF", display=display.data_window)
