@@ -3,6 +3,9 @@ strategy("30分足切替前後戦略", overlay=true,
      default_qty_type=strategy.fixed, default_qty_value=1,
      process_orders_on_close=true)
 
+// === 売買株数（1570 日経レバのみ1株、それ以外は100株） ===
+float trade_qty = syminfo.ticker == "1570" ? 1.0 : 100.0
+
 // === 入力 ===
 showTable  = input.bool(true, "レポートテーブル表示", group="レポート設定")
 max_trades = input.int(300, "集計上限トレード数（各セッションごと）", minval=1, group="レポート設定")
@@ -121,13 +124,13 @@ for i = 0 to N - 1
     eTime = array.get(s_eh, i) * 100 + array.get(s_em, i)
     xTime = array.get(s_xh, i) * 100 + array.get(s_xm, i)
     if hhmm == eTime and not array.get(entryFired, i)
-        strategy.entry("S" + str.tostring(i), strategy.long)
+        strategy.entry("S" + str.tostring(i), strategy.long, qty=trade_qty)
         array.set(entryFired, i, true)
         entryPrice := close
     if hhmm == xTime and array.get(entryFired, i)
         strategy.close("S" + str.tostring(i))
         if not na(entryPrice)
-            array.push(f_getArr(i), close - entryPrice)
+            array.push(f_getArr(i), (close - entryPrice) * trade_qty)
             entryPrice := na
         array.set(entryFired, i, false)
 
